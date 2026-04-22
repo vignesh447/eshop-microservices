@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using EShop.Orders.Api.Application.Abstractions;
 using EShop.Orders.Api.Infrastructure.Persistence;
 using EShop.Orders.Api.Infrastructure.Repositories;
@@ -11,6 +12,22 @@ builder.Services.AddDbContext<OrdersDbContext>(o =>
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 
 builder.Services.AddControllers();
+builder.Services.AddApiVersioning(o =>
+{
+    o.DefaultApiVersion = new ApiVersion(1, 0);
+    o.AssumeDefaultVersionWhenUnspecified = true;
+    o.ReportApiVersions = true;
+    o.ApiVersionReader = ApiVersionReader.Combine(
+        new UrlSegmentApiVersionReader(),
+        new HeaderApiVersionReader("api-version"),
+        new QueryStringApiVersionReader("api-version"));
+})
+.AddMvc()
+.AddApiExplorer(o =>
+{
+    o.GroupNameFormat = "'v'VVV";
+    o.SubstituteApiVersionInUrl = true;
+});
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
