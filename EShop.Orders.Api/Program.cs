@@ -3,8 +3,18 @@ using EShop.Orders.Api.Application.Abstractions;
 using EShop.Orders.Api.Infrastructure.Persistence;
 using EShop.Orders.Api.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
+using EShop.BuildingBlocks.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog((ctx, lc) => lc
+    .ReadFrom.Configuration(ctx.Configuration)
+    .Enrich.FromLogContext()
+    .Enrich.WithMachineName()
+    .Enrich.WithProperty("Service", "Orders")
+    .WriteTo.Console()
+    .WriteTo.Seq("http://localhost:5341"));
 
 builder.Services.AddDbContext<OrdersDbContext>(o =>
     o.UseSqlServer(builder.Configuration.GetConnectionString("Orders")));
@@ -32,6 +42,9 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+
+app.UseSerilogRequestLogging();
+app.UseMiddleware<CorrelationIdMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
