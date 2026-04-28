@@ -1,5 +1,6 @@
-using Serilog;
 using EShop.BuildingBlocks.Logging;
+using EShop.BuildingBlocks.Telemetry;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,6 +11,8 @@ builder.Host.UseSerilog((ctx, lc) => lc
     .Enrich.WithProperty("Service", "Gateway")
     .WriteTo.Console()
     .WriteTo.Seq("http://localhost:5341"));
+
+builder.Services.AddEShopTelemetry("Gateway");
 
 builder.Services.AddReverseProxy()
     .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"))
@@ -22,6 +25,7 @@ builder.Services.AddReverseProxy()
 var app = builder.Build();
 app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseSerilogRequestLogging();
+app.UseEShopTelemetry();
 
 app.MapGet("/", () => Results.Ok(new { service = "EShop Gateway", status = "up" }));
 app.MapReverseProxy();

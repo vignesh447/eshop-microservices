@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+option csharp_namespace = "EShop.Payments.Grpc";
+
+package payments;
+
+// PaymentsService — Orders calls this to authorize a payment for an order.
+service PaymentsService {
+  rpc Authorize (AuthorizeRequest) returns (AuthorizeReply);
+}
+
+message AuthorizeRequest {
+  string order_id    = 1;   // GUID as string
+  string customer_id = 2;
+  double amount      = 3;
+  string currency    = 4;   // ISO-4217, e.g. "USD"
+}
+
+message AuthorizeReply {
+  string payment_id = 1;    // GUID as string
+  Status status     = 2;
+  string reason     = 3;    // populated when DECLINED
+
+  enum Status {
+    UNKNOWN   = 0;
+    APPROVED  = 1;
+    DECLINED  = 2;
+  }
+}

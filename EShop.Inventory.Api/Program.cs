@@ -1,5 +1,6 @@
-﻿using Serilog;
-using EShop.BuildingBlocks.Logging;
+﻿using EShop.BuildingBlocks.Logging;
+using EShop.BuildingBlocks.Telemetry;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +12,8 @@ builder.Host.UseSerilog((ctx, lc) => lc
     .WriteTo.Console()
     .WriteTo.Seq("http://localhost:5341"));
 
+builder.Services.AddEShopTelemetry("Inventory");
+
 // Add services to the container.
 
 builder.Services.AddControllers();
@@ -21,6 +24,7 @@ builder.Services.AddSwaggerGen();
 var app = builder.Build();
 app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseSerilogRequestLogging();
+app.UseEShopTelemetry();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

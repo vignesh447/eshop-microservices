@@ -1,10 +1,12 @@
 using Asp.Versioning;
+using EShop.BuildingBlocks.Logging;
+using EShop.BuildingBlocks.Telemetry;
 using EShop.Orders.Api.Application.Abstractions;
 using EShop.Orders.Api.Infrastructure.Persistence;
 using EShop.Orders.Api.Infrastructure.Repositories;
+using EShop.Payments.Grpc;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
-using EShop.BuildingBlocks.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,10 +18,28 @@ builder.Host.UseSerilog((ctx, lc) => lc
     .WriteTo.Console()
     .WriteTo.Seq("http://localhost:5341"));
 
+builder.Services.AddEShopTelemetry("Orders", includeSqlClient: true);
+
 builder.Services.AddDbContext<OrdersDbContext>(o =>
     o.UseSqlServer(builder.Configuration.GetConnectionString("Orders")));
 
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+
+// gRPC client for Payments
+builder.Services
+    .AddGrpcClient<PaymentsService.PaymentsServiceClient>(o =>
+    {
+        o.Address = new Uri(builder.Configuration["Services:PaymentsGrpc"]
+            ?? "https://localhost:7002");
+    })
+    .ConfigurePrimaryHttpMessageHandler(() =>
+    {
+        var handler = new HttpClientHandler();
+        if (builder.Environment.IsDevelopment())
+            handler.ServerCertificateCustomValidationCallback =
+                HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+        return handler;
+    });
 
 builder.Services.AddControllers();
 builder.Services.AddApiVersioning(o =>
@@ -45,6 +65,7 @@ var app = builder.Build();
 
 app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseSerilogRequestLogging();
+app.UseEShopTelemetry();
 
 if (app.Environment.IsDevelopment())
 {
