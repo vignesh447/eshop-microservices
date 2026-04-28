@@ -20,8 +20,8 @@ builder.Services.AddReverseProxy()
     });
 
 var app = builder.Build();
-app.UseSerilogRequestLogging();
 app.UseMiddleware<CorrelationIdMiddleware>();
+app.UseSerilogRequestLogging();
 
 app.MapGet("/", () => Results.Ok(new { service = "EShop Gateway", status = "up" }));
 app.MapReverseProxy();

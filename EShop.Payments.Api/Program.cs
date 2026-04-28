@@ -19,9 +19,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
-
-app.UseSerilogRequestLogging();
 app.UseMiddleware<CorrelationIdMiddleware>();
+app.UseSerilogRequestLogging();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

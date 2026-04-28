@@ -43,8 +43,8 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-app.UseSerilogRequestLogging();
 app.UseMiddleware<CorrelationIdMiddleware>();
+app.UseSerilogRequestLogging();
 
 if (app.Environment.IsDevelopment())
 {
